@@ -15,7 +15,7 @@ typedef struct s_args
 
 typedef struct s_guest
 {
-	t_args	*arg;
+	t_args	*data;
 	int		guest_id;
 } t_guest;
 
