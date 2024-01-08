@@ -4,52 +4,52 @@
 // pthread_mutex_t guests_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //destroys initialized mutex objects(forks), frees the forks array and the args structure
-void	*destroy_and_free(t_args *arg, int i)
+void	*destroy_and_free(t_args *data, int i)
 {
 	while (i >= 0)
 	{
-		pthread_mutex_destroy(arg->forks[i]);
-		free(arg->forks[i]);
+		pthread_mutex_destroy(data->forks[i]);
+		free(data->forks[i]);
 		i--;
 	}
-	free(arg->forks);
-	arg->forks = NULL;
-	free(arg);
-	arg = NULL;
+	free(data->forks);
+	data->forks = NULL;
+	free(data);
+	data = NULL;
 	return (NULL);
 }
 
-//initializes the args struct and the mutex objects(forks)
+//initializes the main data struct and the mutex objects(forks)
 t_args	*lay_the_table(char **argv)
 {
 	int	i;
 	int	mutex_error;
-	t_args	*arg;
+	t_args	*data;
 
 	i = 0;
 	mutex_error = 0;
-	arg = (t_args *)malloc(sizeof(t_args));
-	if (arg == NULL)
+	data = (t_args *)malloc(sizeof(t_args));
+	if (data == NULL)
 		return (NULL);
-	arg->number_of_philosophers = ft_atoi(argv[1]);
-	arg->forks = (pthread_mutex_t **)malloc(sizeof(pthread_mutex_t *) * arg->number_of_philosophers);
-	if (arg->forks == NULL)
+	data->number_of_philosophers = ft_atoi(argv[1]);
+	data->forks = (pthread_mutex_t **)malloc(sizeof(pthread_mutex_t *) * data->number_of_philosophers);
+	if (data->forks == NULL)
 		return (NULL);
-	while (i < arg->number_of_philosophers)
+	while (i < data->number_of_philosophers)
 	{
-		arg->forks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-		if (arg->forks[i] == NULL)
-			return (destroy_and_free(arg, i));
-		mutex_error = pthread_mutex_init(arg->forks[i], NULL);
+		data->forks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+		if (data->forks[i] == NULL)
+			return (destroy_and_free(data, i));
+		mutex_error = pthread_mutex_init(data->forks[i], NULL);
 		if (mutex_error != 0)
-			return (destroy_and_free(arg, i));
+			return (destroy_and_free(data, i));
 		i++;
 	}
-	arg->time_to_die = ft_atoi(argv[2]);
-	arg->time_to_eat = ft_atoi(argv[3]);
-	arg->time_to_sleep = ft_atoi(argv[4]);
-	arg->number_of_times_each_philosopher_must_eat = 0;
-	return (arg);
+	data->time_to_die = ft_atoi(argv[2]);
+	data->time_to_eat = ft_atoi(argv[3]);
+	data->time_to_sleep = ft_atoi(argv[4]);
+	data->number_of_times_each_philosopher_must_eat = 0;
+	return (data);
 }
 
 void *start_soiree(t_guest *philosopher)
@@ -63,18 +63,18 @@ void *start_soiree(t_guest *philosopher)
 }
 
 //creates the threads
-int	receive_guests(t_args *arg)
+int	receive_guests(t_args *data)
 {
 	int i;
 	int	thread_error;
-	pthread_t id[arg->number_of_philosophers];
-	t_guest philosopher[arg->number_of_philosophers];
+	pthread_t id[data->number_of_philosophers];
+	t_guest philosopher[data->number_of_philosophers];
 	
 	i = 0;
 	thread_error = 0;
-	while (i < arg->number_of_philosophers)
+	while (i < data->number_of_philosophers)
 	{
-		philosopher[i].arg = arg;
+		philosopher[i].data = data;
         philosopher[i].guest_id = i;
 		thread_error = pthread_create(&id[i], NULL, (void *)start_soiree, &philosopher[i]);
 		printf("thread created\n");
@@ -90,34 +90,28 @@ int	receive_guests(t_args *arg)
 
 int	main(int argc, char **argv)
 {
-	t_args	*arg;
+	t_args	*data;
 
-	arg = NULL;
+	data = NULL;
 	if (argc < 5 || argc > 6)
 	{
 		printf("invalid number of arguments!\n");
 		return(0);
 	}
-	arg = lay_the_table(argv);
-	if (arg == NULL)
+	data = lay_the_table(argv);
+	if (data == NULL)
 	{
 		printf("initialization error!\n");
 		return(0);
 	}
 	if (argc == 6)
-		arg->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
-	// if (pthread_mutex_init(&guests_mutex, NULL) != 0)
-    // {
-    //     fprintf(stderr, "Mutex initialization for global guests failed\n");
-	// 	destroy_and_free(arg, arg->number_of_philosophers - 1);
-    //     return (1);
-    // }
-	if (receive_guests(arg))
+		data->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
+	if (receive_guests(data))
 	{
 		printf("...the spaghetti party can start...\n");
 		//start_soiree(arg);
 	}
-	destroy_and_free(arg, arg->number_of_philosophers - 1);
+	destroy_and_free(data, data->number_of_philosophers - 1);
 	//pthread_mutex_destroy(&guests_mutex);
 	return (0);
 }
