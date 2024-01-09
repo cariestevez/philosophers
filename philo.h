@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 typedef struct s_args
 {
@@ -17,6 +18,7 @@ typedef struct s_guest
 {
 	t_args	*data;
 	int		guest_id;
+	//int		dead_count;
 } t_guest;
 
 //main.c

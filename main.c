@@ -1,7 +1,16 @@
-#include "philo.h"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
+/*   Updated: 2024/01/09 15:32:47 by cestevez         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-// int guests = 0;
-// pthread_mutex_t guests_mutex = PTHREAD_MUTEX_INITIALIZER;
+#include "philo.h"
 
 //destroys initialized mutex objects(forks), frees the forks array and the args structure
 void	*destroy_and_free(t_args *data, int i)
@@ -52,13 +61,36 @@ t_args	*lay_the_table(char **argv)
 	return (data);
 }
 
-void *start_soiree(t_guest *philosopher)
+//main logic
+void	*start_soiree(t_guest *philosopher)
 {
-	//int philosopher_id = arg->philosophers_id;
-	// pthread_mutex_lock(&guests_mutex); // Lock the mutex before accessing guests
-    // guests++;
+	struct timeval current_time;
+	?? time_stamp;
+
+	gettimeofday(&current_time, NULL);
+	time_stamp = &current_time.tv_usec; 
     printf("...welcome philosopher %d...\n", philosopher->guest_id);
-    //pthread_mutex_unlock(&guests_mutex);
+	while (1)
+	{
+		if ((gettimeofday() - time) > philosopher->data->time_to_die)
+		{
+			printf("%d %d died\n", gettimeofday(), philosopher->guest_id);
+			break;
+		}
+		else if (philosopher->data->forks[philosopher->guest_id]
+			&& philosopher->data->forks[philosopher->guest_id + 1])
+		{
+			// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id]); // takes the forks
+			printf("%d %d is eating\n", gettimeofday(), philosopher->guest_id);
+			//wait(philosopher->data->time_to_eat);
+			//pthread_mutex_unlock(philosopher->data->forks[philosopher->guest_id]); // leaves forks on the table
+			//time = gettimeofday();
+			//printf("%d %d is sleeping\n", gettimeofday(), philosopher->guest_id);
+			//usleep(philosopher->data->time_to_sleep);
+		}
+		printf("%d %d is thinking\n", gettimeofday(), philosopher->guest_id);
+	}
+    
 	return (NULL);
 }
 
@@ -70,24 +102,26 @@ int	receive_guests(t_args *data)
 	pthread_t id[data->number_of_philosophers];
 	t_guest philosopher[data->number_of_philosophers];
 	
-	i = 0;
+	i = 1;
 	thread_error = 0;
 	while (i < data->number_of_philosophers)
 	{
 		philosopher[i].data = data;
         philosopher[i].guest_id = i;
 		thread_error = pthread_create(&id[i], NULL, (void *)start_soiree, &philosopher[i]);
-		printf("thread created\n");
+		printf("thread %d created\n", i);
 		if (thread_error != 0)
 		{
 			printf("error creating a thread. Exiting...\n");
 			return (0);
 		}
+		pthread_join(id[i], NULL);//makes this func wait until all threads end(all have eate or died);
 		i++;
 	}
 	return (1);
 }
 
+//arg checks, initialization and freeing
 int	main(int argc, char **argv)
 {
 	t_args	*data;
@@ -107,11 +141,7 @@ int	main(int argc, char **argv)
 	if (argc == 6)
 		data->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
 	if (receive_guests(data))
-	{
-		printf("...the spaghetti party can start...\n");
-		//start_soiree(arg);
-	}
+		printf("...the spaghetti party is comming to an end...\n");
 	destroy_and_free(data, data->number_of_philosophers - 1);
-	//pthread_mutex_destroy(&guests_mutex);
 	return (0);
 }

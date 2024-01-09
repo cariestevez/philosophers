@@ -1,6 +1,5 @@
-#gcc -Wall -Wextra -Werror ft_atoi.c main.c
 NAME := philo
-CFLAGS := -g -Wall -Wextra -Werror
+CFLAGS := -g -pthread -Wall -Wextra -Werror
 #INC := -Iinc
 SRCS := 	main.c ft_atoi.c
 OBJS := $(SRCS:.c=.o)
