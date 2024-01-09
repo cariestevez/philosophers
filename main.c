@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/09 15:32:47 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/09 18:17:33 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,37 +61,58 @@ t_args	*lay_the_table(char **argv)
 	return (data);
 }
 
-//main logic
+//main logic //could crash now bc guest_id is saved after threading?
 void	*start_soiree(t_guest *philosopher)
 {
-	struct timeval current_time;
-	?? time_stamp;
+	struct timeval		current_time;
+	long unsigned int	wakeup_time_milli;
+	//long unsigned int	current_time_milli;
 
-	gettimeofday(&current_time, NULL);
-	time_stamp = &current_time.tv_usec; 
     printf("...welcome philosopher %d...\n", philosopher->guest_id);
 	while (1)
 	{
-		if ((gettimeofday() - time) > philosopher->data->time_to_die)
+		gettimeofday(&current_time, NULL);
+		if (((current_time.tv_usec * 1000000) - wakeup_time_milli) > philosopher->data->time_to_die)
 		{
-			printf("%d %d died\n", gettimeofday(), philosopher->guest_id);
+			printf("%d %d died\n", current_time.tv_usec * 1000000, philosopher->guest_id);
 			break;
 		}
-		else if (philosopher->data->forks[philosopher->guest_id]
-			&& philosopher->data->forks[philosopher->guest_id + 1])
+		//problem when entering here and muting one fork but the other isn't available yet?!
+		//will stay blocked in here?
+		else
 		{
-			// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id]); // takes the forks
-			printf("%d %d is eating\n", gettimeofday(), philosopher->guest_id);
-			//wait(philosopher->data->time_to_eat);
-			//pthread_mutex_unlock(philosopher->data->forks[philosopher->guest_id]); // leaves forks on the table
-			//time = gettimeofday();
-			//printf("%d %d is sleeping\n", gettimeofday(), philosopher->guest_id);
-			//usleep(philosopher->data->time_to_sleep);
+			if (philosopher->data->forks[philosopher->guest_id]
+				&& philosopher->data->forks[philosopher->guest_id + 1])
+			{
+				// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id]); // takes the fork on its right
+				// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id - 1]); // takes the fork on its right
+				printf("%d %d is eating\n", current_time.tv_usec * 1000000, philosopher->guest_id);
+				//usleep(philosopher->data->time_to_eat);
+				//pthread_mutex_unlock(philosopher->data->forks[philosopher->guest_id]); // leaves forks on the table
+				//time = gettimeofday();
+				//printf("%d %d is sleeping\n", gettimeofday(), philosopher->guest_id);
+				//usleep(philosopher->data->time_to_sleep);
+				//gettimeofday(&current_time, NULL);
+				//wakeup_time_milli = current_time.tv_usec * 1000000;
+			}
 		}
-		printf("%d %d is thinking\n", gettimeofday(), philosopher->guest_id);
-	}
-    
+		printf("%d %d is thinking\n", current_time.tv_usec * 1000000, philosopher->guest_id);
+	} 
 	return (NULL);
+}
+
+//joins threads to the main processes' one 
+//so this waits until all threads end(all philos have eaten or died)
+int	join_threads(t_guest *philosopher)
+{
+	int	i;
+
+	i = 1;
+	while (i < philosopher->data->number_of_philosophers)
+	{
+		pthread_join(philosopher->guest_id, NULL);
+		i++;
+	}
 }
 
 //creates the threads
@@ -107,17 +128,18 @@ int	receive_guests(t_args *data)
 	while (i < data->number_of_philosophers)
 	{
 		philosopher[i].data = data;
-        philosopher[i].guest_id = i;
+		philosopher[i].order_of_arrival = i;
 		thread_error = pthread_create(&id[i], NULL, (void *)start_soiree, &philosopher[i]);
+		philosopher[i].guest_id = id[i];//maybe saving the whole id array into the main data struct?
 		printf("thread %d created\n", i);
 		if (thread_error != 0)
 		{
 			printf("error creating a thread. Exiting...\n");
 			return (0);
 		}
-		pthread_join(id[i], NULL);//makes this func wait until all threads end(all have eate or died);
 		i++;
 	}
+	join_threads(philosopher);
 	return (1);
 }
 
