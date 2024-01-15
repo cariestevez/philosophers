@@ -3,144 +3,135 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/09 18:17:33 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/15 19:38:22 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-//destroys initialized mutex objects(forks), frees the forks array and the args structure
-void	*destroy_and_free(t_args *data, int i)
-{
-	while (i >= 0)
-	{
-		pthread_mutex_destroy(data->forks[i]);
-		free(data->forks[i]);
-		i--;
-	}
-	free(data->forks);
-	data->forks = NULL;
-	free(data);
-	data = NULL;
-	return (NULL);
-}
-
-//initializes the main data struct and the mutex objects(forks)
-t_args	*lay_the_table(char **argv)
-{
-	int	i;
-	int	mutex_error;
-	t_args	*data;
-
-	i = 0;
-	mutex_error = 0;
-	data = (t_args *)malloc(sizeof(t_args));
-	if (data == NULL)
-		return (NULL);
-	data->number_of_philosophers = ft_atoi(argv[1]);
-	data->forks = (pthread_mutex_t **)malloc(sizeof(pthread_mutex_t *) * data->number_of_philosophers);
-	if (data->forks == NULL)
-		return (NULL);
-	while (i < data->number_of_philosophers)
-	{
-		data->forks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-		if (data->forks[i] == NULL)
-			return (destroy_and_free(data, i));
-		mutex_error = pthread_mutex_init(data->forks[i], NULL);
-		if (mutex_error != 0)
-			return (destroy_and_free(data, i));
-		i++;
-	}
-	data->time_to_die = ft_atoi(argv[2]);
-	data->time_to_eat = ft_atoi(argv[3]);
-	data->time_to_sleep = ft_atoi(argv[4]);
-	data->number_of_times_each_philosopher_must_eat = 0;
-	return (data);
-}
-
-//main logic //could crash now bc guest_id is saved after threading?
+//main logic
 void	*start_soiree(t_guest *philosopher)
 {
+	int					counter;
+	int					times_eaten;
 	struct timeval		current_time;
 	long unsigned int	wakeup_time_milli;
-	//long unsigned int	current_time_milli;
 
-    printf("...welcome philosopher %d...\n", philosopher->guest_id);
+	counter = 0;
+	times_eaten = 0;
+	wakeup_time_milli = 0;
+    printf("...welcome philosopher %lu...\n", (unsigned long)philosopher->guest_id);
 	while (1)
 	{
-		gettimeofday(&current_time, NULL);
-		if (((current_time.tv_usec * 1000000) - wakeup_time_milli) > philosopher->data->time_to_die)
+	//check if someone else died. If so, exits
+		printf("philo %lu trying to lock someone_died\n", (unsigned long)philosopher->guest_id);
+		pthread_mutex_lock(philosopher->data->death_mutex);
+		printf("philo %lu locked someone_died\n", (unsigned long)philosopher->guest_id);
+		if (philosopher->data->someone_died != 0)
 		{
-			printf("%d %d died\n", current_time.tv_usec * 1000000, philosopher->guest_id);
-			break;
+			printf("philo %lu found out someone_died\n", (unsigned long)philosopher->guest_id);
+			return (pthread_mutex_unlock(philosopher->data->death_mutex), NULL);
+		}
+		pthread_mutex_unlock(philosopher->data->death_mutex);
+		printf("philo %lu unlocked someone_died\n", (unsigned long)philosopher->guest_id);
+	//check if this philosopher is dead. If so, exits
+		gettimeofday(&current_time, NULL);//exception for 1st loop bc wakeup_time == 0?
+		if (counter > 0 && (((current_time.tv_usec / 1000) - wakeup_time_milli) > (unsigned long)philosopher->data->time_to_die))
+		{
+			printf("philo %lu trying to lock someone_died because HE'S DYING\n", (unsigned long)philosopher->guest_id);
+			pthread_mutex_lock(philosopher->data->death_mutex);
+			printf("philo %lu locked someone_died\n", (unsigned long)philosopher->guest_id);
+			philosopher->data->someone_died = philosopher->guest_id;
+			printf("philo %lu trying to lock time_of_defunction\n", (unsigned long)philosopher->guest_id);
+			pthread_mutex_lock(philosopher->data->time_mutex);
+			printf("philo %lu locked time_of_defunction\n", (unsigned long)philosopher->guest_id);
+			philosopher->data->time_of_defunction = current_time.tv_usec / 1000;
+			pthread_mutex_unlock(philosopher->data->death_mutex);
+			printf("philo %lu unlocked time_of_defunction\n", (unsigned long)philosopher->guest_id);
+			printf("philo %lu unlocking time_of_defunction before returning...\n", (unsigned long)philosopher->guest_id);
+			return (pthread_mutex_unlock(philosopher->data->time_mutex), NULL);
+		}
+	//check if the philo has eaten enough. If so, exits
+		if (philosopher->data->number_of_times_each_philosopher_must_eat != 0 && times_eaten == philosopher->data->number_of_times_each_philosopher_must_eat)
+		{
+			printf("philo %lu trying to lock remaining_guests\n", (unsigned long)philosopher->guest_id);
+			pthread_mutex_lock(philosopher->data->remaining_mutex);
+			printf("philo %lu locked remaining_guests\n", (unsigned long)philosopher->guest_id);
+			philosopher->data->remaining_guests--;
+			printf("philo %lu unlocking remaining_guests before returning...\n", (unsigned long)philosopher->guest_id);
+			return (pthread_mutex_unlock(philosopher->data->remaining_mutex), NULL);
 		}
 		//problem when entering here and muting one fork but the other isn't available yet?!
 		//will stay blocked in here?
 		else
 		{
-			if (philosopher->data->forks[philosopher->guest_id]
-				&& philosopher->data->forks[philosopher->guest_id + 1])
-			{
-				// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id]); // takes the fork on its right
-				// pthread_mutex_lock(philosopher->data->forks[philosopher->guest_id - 1]); // takes the fork on its right
-				printf("%d %d is eating\n", current_time.tv_usec * 1000000, philosopher->guest_id);
-				//usleep(philosopher->data->time_to_eat);
-				//pthread_mutex_unlock(philosopher->data->forks[philosopher->guest_id]); // leaves forks on the table
-				//time = gettimeofday();
-				//printf("%d %d is sleeping\n", gettimeofday(), philosopher->guest_id);
-				//usleep(philosopher->data->time_to_sleep);
-				//gettimeofday(&current_time, NULL);
-				//wakeup_time_milli = current_time.tv_usec * 1000000;
-			}
+			
+			pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival]); // takes the fork on its right
+			if (philosopher->order_of_arrival == 0)
+				pthread_mutex_lock(philosopher->data->forks[philosopher->data->number_of_philosophers]);
+			else
+				pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
+			gettimeofday(&current_time, NULL);
+			printf("%d %lu is eating\n", current_time.tv_usec * 1000000, (unsigned long)philosopher->guest_id);
+			usleep(philosopher->data->time_to_eat);
+			pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival]);
+			if (philosopher->order_of_arrival == 0)
+				pthread_mutex_unlock(philosopher->data->forks[philosopher->data->number_of_philosophers]);
+			else
+				pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
+			gettimeofday(&current_time, NULL);
+			printf("%d %lu is sleeping\n", current_time.tv_usec * 1000000, (unsigned long)philosopher->guest_id);
+			usleep(philosopher->data->time_to_sleep);
+			gettimeofday(&current_time, NULL);
+			wakeup_time_milli = current_time.tv_usec * 1000000;
+			printf("%d %lu is thinking\n", current_time.tv_usec * 1000000, (unsigned long)philosopher->guest_id);
 		}
-		printf("%d %d is thinking\n", current_time.tv_usec * 1000000, philosopher->guest_id);
+		counter++;
 	} 
 	return (NULL);
-}
-
-//joins threads to the main processes' one 
-//so this waits until all threads end(all philos have eaten or died)
-int	join_threads(t_guest *philosopher)
-{
-	int	i;
-
-	i = 1;
-	while (i < philosopher->data->number_of_philosophers)
-	{
-		pthread_join(philosopher->guest_id, NULL);
-		i++;
-	}
 }
 
 //creates the threads
 int	receive_guests(t_args *data)
 {
 	int i;
-	int	thread_error;
-	pthread_t id[data->number_of_philosophers];
+//	pthread_t thread_id[data->number_of_philosophers];
 	t_guest philosopher[data->number_of_philosophers];
 	
-	i = 1;
-	thread_error = 0;
+	i = 0;
 	while (i < data->number_of_philosophers)
 	{
 		philosopher[i].data = data;
 		philosopher[i].order_of_arrival = i;
-		thread_error = pthread_create(&id[i], NULL, (void *)start_soiree, &philosopher[i]);
-		philosopher[i].guest_id = id[i];//maybe saving the whole id array into the main data struct?
-		printf("thread %d created\n", i);
-		if (thread_error != 0)
-		{
-			printf("error creating a thread. Exiting...\n");
-			return (0);
-		}
+		philosopher[i].guest_id = 0;
+		philosopher[i].times_eaten = 0;
+		if (pthread_create(&philosopher[i].guest_id, NULL, (void *)start_soiree, &philosopher[i]) != 0)
+			return (printf("error creating a thread. Exiting...\n"), 0);
+		//printf("thread %d with id %lu created\n", i, (long unsigned)philosopher[i].guest_id);
 		i++;
 	}
-	join_threads(philosopher);
-	return (1);
+	if (join_threads(philosopher) != 0)
+		return (0);
+	while (1)//maybe do both checks in the same condition?
+	{
+		pthread_mutex_lock(data->death_mutex);
+		if (data->someone_died != 0)
+		{
+			pthread_mutex_lock(data->time_mutex);
+			printf("%d %lu died\n", data->time_of_defunction, (unsigned long)data->someone_died);
+			pthread_mutex_unlock(data->time_mutex);
+			return (pthread_mutex_unlock(data->death_mutex), 1);
+		}
+		pthread_mutex_unlock(data->death_mutex);
+		pthread_mutex_lock(data->remaining_mutex);
+		if (data->remaining_guests == 0)
+			return (pthread_mutex_unlock(data->remaining_mutex), 1);
+		pthread_mutex_unlock(data->remaining_mutex);
+	}
+	//return (0);
 }
 
 //arg checks, initialization and freeing
@@ -150,20 +141,14 @@ int	main(int argc, char **argv)
 
 	data = NULL;
 	if (argc < 5 || argc > 6)
-	{
-		printf("invalid number of arguments!\n");
-		return(0);
-	}
+		return(printf("invalid number of arguments!\n"), 0);
+	//other arg checks like times_must_eat > 0 etc?
 	data = lay_the_table(argv);
 	if (data == NULL)
-	{
-		printf("initialization error!\n");
-		return(0);
-	}
+		return(printf("initialization error!\n"), 0);
 	if (argc == 6)
 		data->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
 	if (receive_guests(data))
-		printf("...the spaghetti party is comming to an end...\n");
-	destroy_and_free(data, data->number_of_philosophers - 1);
-	return (0);
+		printf("...the spaghetti party is comming to an end. Thanks everybody for comming...\n");
+	return (destroy_and_free(data, data->number_of_philosophers - 1, 1), 0);
 }

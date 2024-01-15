@@ -1,7 +1,7 @@
 NAME := philo
 CFLAGS := -g -pthread -Wall -Wextra -Werror
 #INC := -Iinc
-SRCS := 	main.c ft_atoi.c
+SRCS := 	main.c init_and_free.c utils.c
 OBJS := $(SRCS:.c=.o)
 
 all: ${NAME}
