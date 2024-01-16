@@ -9,12 +9,11 @@ typedef struct s_args
 {
 	int				number_of_philosophers;//read-only access
 	pthread_mutex_t **forks;//-->mutex
-	pthread_mutex_t *death_mutex;//-->mutex for someone_died
-	pthread_mutex_t *remaining_mutex;//-->mutex for remaining_guests
-	pthread_mutex_t *time_mutex;//-->mutex for time_of_defunction
-	int				*fork_available;//-->mutex
+	pthread_mutex_t *someone_died_mutex;//-->mutex for someone_died
+	pthread_mutex_t *time_of_defunction_mutex;//-->mutex for time_of_defunction
+	pthread_mutex_t *remaining_guests_mutex;//-->mutex for remaining_guests
 	pthread_t		someone_died;//-->mutex	object
-	int				time_of_defunction;//-->mutex	object
+	int				time_of_defunction;//-->mutex object
 	int				remaining_guests;//-->mutex object
 	int				time_to_die;//read-only access
 	int				time_to_eat;//read-only access
