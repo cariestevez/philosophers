@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/16 01:08:26 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/16 11:43:43 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,30 +16,41 @@ unsigned long	eat_nap_wakeup(t_guest *philosopher)
 {
 	struct timeval		current_time;
 
-	pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]); // takes the fork on its right
-	//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
-	if (philosopher->order_of_arrival == 0)
+	if (philosopher->order_of_arrival != philosopher->data->number_of_philosophers)
 	{
 		//write(1, "philo 0 trying to get both forks\n", 33);
-		pthread_mutex_lock(philosopher->data->forks[philosopher->data->number_of_philosophers - 1]);
-		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->data->number_of_philosophers - 1);
+		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival]);
+		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
+		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
+		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
 	}
 	else
 	{
-		//write(1, "other even trying to get both forks\n", 36);
-		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
+		pthread_mutex_lock(philosopher->data->forks[0]); // takes the fork on its right
+		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]); // takes the fork on its left
+		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, 0);
 		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
 	}
 	gettimeofday(&current_time, NULL);
-	printf("%d %d is eating\n", current_time.tv_usec, philosopher->order_of_arrival + 1);
+	printf("%d %d is eating\n", current_time.tv_usec, philosopher->order_of_arrival);
 	usleep(philosopher->data->time_to_eat);
-	pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival]);
-	if (philosopher->order_of_arrival == 0)
-		pthread_mutex_unlock(philosopher->data->forks[philosopher->data->number_of_philosophers - 1]);
-	else
+	if (philosopher->order_of_arrival != philosopher->data->number_of_philosophers)
+	{
+		//write(1, "philo 0 trying to get both forks\n", 33);
+		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival]);
 		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
+		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
+		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
+	}
+	else
+	{
+		pthread_mutex_unlock(philosopher->data->forks[0]); // takes the fork on its right
+		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival - 1]); // takes the fork on its left
+		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, 0);
+		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
+	}
 	gettimeofday(&current_time, NULL);
-	printf("%d %d is sleeping\n", current_time.tv_usec, philosopher->order_of_arrival + 1);
+	printf("%d %d is sleeping\n", current_time.tv_usec, philosopher->order_of_arrival);
 	usleep(philosopher->data->time_to_sleep);
 	gettimeofday(&current_time, NULL);
 	return (current_time.tv_usec);
@@ -61,20 +72,20 @@ void	*start_soiree(t_guest *philosopher)
 	{
 	//check if this philosopher is dead. If so, exits
 		gettimeofday(&current_time, NULL);
-		wakeup_time = current_time.tv_usec;
+	//	wakeup_time = current_time.tv_usec;
 		//write(1, "check 1\n", 8);
-		if (current_time.tv_usec - wakeup_time > (unsigned long)philosopher->data->time_to_die)
+		if (round != 0 && current_time.tv_usec - wakeup_time > (unsigned long)philosopher->data->time_to_die)
 		{
 			//printf("philo %lu trying to lock someone_died because HE'S DYING\n", (unsigned long)philosopher->guest_id);
 			pthread_mutex_lock(philosopher->data->someone_died_mutex);
 			//printf("philo %lu locked someone_died\n", (unsigned long)philosopher->guest_id);
-			philosopher->data->someone_died = philosopher->guest_id;
+			philosopher->data->someone_died = philosopher->order_of_arrival;
+			pthread_mutex_unlock(philosopher->data->someone_died_mutex);
+			//printf("philo %lu unlocked someone_died and unlocking time_of_defunction before returning...\n", (unsigned long)philosopher->guest_id);
 			//printf("philo %lu trying to lock time_of_defunction\n", (unsigned long)philosopher->guest_id);
 			pthread_mutex_lock(philosopher->data->time_of_defunction_mutex);
 			//printf("philo %lu locked time_of_defunction\n", (unsigned long)philosopher->guest_id);
 			philosopher->data->time_of_defunction = current_time.tv_usec;
-			pthread_mutex_unlock(philosopher->data->someone_died_mutex);
-			//printf("philo %lu unlocked someone_died and unlocking time_of_defunction before returning...\n", (unsigned long)philosopher->guest_id);
 			return (pthread_mutex_unlock(philosopher->data->time_of_defunction_mutex), NULL);
 		}
 	//check if someone else died. If so, exits
@@ -147,7 +158,7 @@ int	receive_guests(t_args *data)
 			if (data->someone_died != 0)
 			{
 				pthread_mutex_lock(data->time_of_defunction_mutex);
-				printf("%d %lu died\n", data->time_of_defunction, (unsigned long)data->someone_died);
+				printf("%d %d died\n", data->time_of_defunction, data->someone_died);
 				pthread_mutex_unlock(data->time_of_defunction_mutex);
 			}
 			pthread_mutex_unlock(data->someone_died_mutex);
