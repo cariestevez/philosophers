@@ -12,7 +12,7 @@ typedef struct s_args
 	pthread_mutex_t *someone_died_mutex;//-->mutex for someone_died
 	pthread_mutex_t *time_of_defunction_mutex;//-->mutex for time_of_defunction
 	pthread_mutex_t *remaining_guests_mutex;//-->mutex for remaining_guests
-	pthread_t		someone_died;//-->mutex	object
+	int				someone_died;//-->mutex	object
 	int				time_of_defunction;//-->mutex object
 	int				remaining_guests;//-->mutex object
 	int				time_to_die;//read-only access
