@@ -14,12 +14,12 @@ void	*destroy_and_free(t_args *data, int i, int flag)
 	data->forks = NULL;
 	if (flag != 0)
 	{
-		pthread_mutex_destroy(data->death_mutex);
-		pthread_mutex_destroy(data->remaining_mutex);
-		free(data->death_mutex);
-		data->death_mutex = NULL;
-		free(data->remaining_mutex);
-		data->remaining_mutex = NULL;
+		pthread_mutex_destroy(data->someone_died_mutex);
+		pthread_mutex_destroy(data->remaining_guests_mutex);
+		free(data->someone_died_mutex);
+		data->someone_died_mutex = NULL;
+		free(data->remaining_guests_mutex);
+		data->remaining_guests_mutex = NULL;
 	}
 	free(data);
 	data = NULL;
@@ -58,40 +58,40 @@ t_args	*lay_the_table(char **argv)
 t_args	*last_preparations(t_args *data, char **argv)
 {
 	data->someone_died = 0;
-	data->death_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (data->death_mutex == NULL)
+	data->someone_died_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (data->someone_died_mutex == NULL)
 		return (NULL);
-    if (pthread_mutex_init(data->death_mutex, NULL) != 0)
-		return (free(data->death_mutex), NULL);
+    if (pthread_mutex_init(data->someone_died_mutex, NULL) != 0)
+		return (free(data->someone_died_mutex), NULL);
 	data->remaining_guests = data->number_of_philosophers;
-	data->remaining_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (data->remaining_mutex == NULL)
+	data->remaining_guests_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (data->remaining_guests_mutex == NULL)
 	{
-		pthread_mutex_destroy(data->death_mutex);
-		return (free(data->death_mutex), NULL);
+		pthread_mutex_destroy(data->someone_died_mutex);
+		return (free(data->someone_died_mutex), NULL);
 	}
-	if (pthread_mutex_init(data->remaining_mutex, NULL) != 0)
+	if (pthread_mutex_init(data->remaining_guests_mutex, NULL) != 0)
 	{
-		pthread_mutex_destroy(data->death_mutex);
-		free(data->death_mutex);
-		return (free(data->remaining_mutex), NULL);
+		pthread_mutex_destroy(data->someone_died_mutex);
+		free(data->someone_died_mutex);
+		return (free(data->remaining_guests_mutex), NULL);
 	}
 	data->time_of_defunction = 0;
-	data->time_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	if (data->time_mutex == NULL)
+	data->time_of_defunction_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	if (data->time_of_defunction_mutex == NULL)
 	{
-		pthread_mutex_destroy(data->death_mutex);
-		pthread_mutex_destroy(data->remaining_mutex);
-		free(data->death_mutex);
-		return (free(data->remaining_mutex), NULL);
+		pthread_mutex_destroy(data->someone_died_mutex);
+		pthread_mutex_destroy(data->remaining_guests_mutex);
+		free(data->someone_died_mutex);
+		return (free(data->remaining_guests_mutex), NULL);
 	}
-	if (pthread_mutex_init(data->time_mutex, NULL) != 0)
+	if (pthread_mutex_init(data->time_of_defunction_mutex, NULL) != 0)
 	{
-		pthread_mutex_destroy(data->death_mutex);
-		pthread_mutex_destroy(data->remaining_mutex);
-		free(data->death_mutex);
-		free(data->remaining_mutex);
-		return (free(data->time_mutex), NULL);
+		pthread_mutex_destroy(data->someone_died_mutex);
+		pthread_mutex_destroy(data->remaining_guests_mutex);
+		free(data->someone_died_mutex);
+		free(data->remaining_guests_mutex);
+		return (free(data->time_of_defunction_mutex), NULL);
 	}
 	data->time_to_die = ft_atoi(argv[2]);
 	data->time_to_eat = ft_atoi(argv[3]);
