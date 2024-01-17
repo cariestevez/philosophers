@@ -1,19 +1,32 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/01/17 12:39:17 by cestevez          #+#    #+#             */
+/*   Updated: 2024/01/17 18:24:30 by cestevez         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-// int	detach_threads(t_guest *philosopher)
-// {
-// 	int	i;
+uint64_t	get_time(uint64_t start)
+{
+	struct timeval	current_time;
+	uint64_t		sec;
+	uint64_t		usec;
 
-// 	i = 0;
-// 	while (i < philosopher->data->number_of_philosophers)
-// 	{
-// 		pthread_detach(philosopher[i].guest_id);
-// 		i++;
-// 	}
-// }
+	gettimeofday(&current_time, NULL);
+	sec = current_time.tv_sec * 1000;
+	usec = current_time.tv_usec / 1000;
+	if (start == 0)
+		return (sec + usec);
+	return (sec + usec - start);
+}
 
-//joins threads to the main processes' one 
-//so this waits until all threads end(all philos have eaten or one died)
+//joins threads to the main processes' one (waits until all threads end)
 int	join_threads(t_guest *philosopher)
 {
 	int	i;
@@ -21,12 +34,14 @@ int	join_threads(t_guest *philosopher)
 
 	i = 0;
 	join_return = 0;
-	while (i < philosopher->data->number_of_philosophers)
+	while (i < philosopher->data->num_philos)
 	{
-		join_return = pthread_join(philosopher[i].guest_id, NULL);
-		//printf("JOINED THREAD %lu\n", (unsigned long)philosopher[i].guest_id);
+		join_return = pthread_join(philosopher[i].id, NULL);
 		if (join_return != 0)
-			return (printf("Error(%d) joining threads. Exiting...\n", join_return), 1);
+		{
+			printf("Error(%d) joining threads. Exiting...\n", join_return);
+			return (1);
+		}
 		i++;
 	}
 	return (0);
@@ -59,4 +74,24 @@ int	ft_atoi(const char *nptr)
 		i++;
 	}
 	return (number * sign);
+}
+
+int	is_valid(const char *nptr)
+{
+	int		i;
+	char	*str;
+
+	str = (char *)nptr;
+	i = 0;
+	if (str[i] == '+' || str[i] == '-')
+	{
+		if (str[i] == '-')
+			return (0);
+		i++;
+	}
+	while (str[i] != '\0' && (str[i] >= 48 && str[i] <= 57))
+		i++;
+	if (str[i] == '\0')
+		return (1);
+	return (0);
 }
