@@ -3,188 +3,113 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/16 11:43:43 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/17 18:53:01 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-unsigned long	eat_nap_wakeup(t_guest *philosopher)
-{
-	struct timeval		current_time;
-
-	if (philosopher->order_of_arrival != philosopher->data->number_of_philosophers)
-	{
-		//write(1, "philo 0 trying to get both forks\n", 33);
-		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival]);
-		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
-		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
-		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
-	}
-	else
-	{
-		pthread_mutex_lock(philosopher->data->forks[0]); // takes the fork on its right
-		pthread_mutex_lock(philosopher->data->forks[philosopher->order_of_arrival - 1]); // takes the fork on its left
-		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, 0);
-		//printf("philo %lu took fork %d\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
-	}
-	gettimeofday(&current_time, NULL);
-	printf("%d %d is eating\n", current_time.tv_usec, philosopher->order_of_arrival);
-	usleep(philosopher->data->time_to_eat);
-	if (philosopher->order_of_arrival != philosopher->data->number_of_philosophers)
-	{
-		//write(1, "philo 0 trying to get both forks\n", 33);
-		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival]);
-		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival - 1]);
-		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
-		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
-	}
-	else
-	{
-		pthread_mutex_unlock(philosopher->data->forks[0]); // takes the fork on its right
-		pthread_mutex_unlock(philosopher->data->forks[philosopher->order_of_arrival - 1]); // takes the fork on its left
-		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, 0);
-		//printf("philo %lu left fork %d on the table\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival - 1);
-	}
-	gettimeofday(&current_time, NULL);
-	printf("%d %d is sleeping\n", current_time.tv_usec, philosopher->order_of_arrival);
-	usleep(philosopher->data->time_to_sleep);
-	gettimeofday(&current_time, NULL);
-	return (current_time.tv_usec);
-}
-
-//main logic
-void	*start_soiree(t_guest *philosopher)
+void	*soiree(t_guest *philo)
 {
 	int					round;
 	int					times_eaten;
-	struct timeval		current_time;
-	long unsigned int	wakeup_time;
 
 	round = 0;
 	times_eaten = 0;
-	wakeup_time = 0;
-   // printf("...welcome philosopher %lu order of arrival: %d...\n", (unsigned long)philosopher->guest_id, philosopher->order_of_arrival);
+	if (philo->data->num_philos == 1)
+		return (ft_one_philo(philo), (void *) NULL);
 	while (1)
 	{
-	//check if this philosopher is dead. If so, exits
-		gettimeofday(&current_time, NULL);
-	//	wakeup_time = current_time.tv_usec;
-		//write(1, "check 1\n", 8);
-		if (round != 0 && current_time.tv_usec - wakeup_time > (unsigned long)philosopher->data->time_to_die)
+		if (ft_i_died(philo) || ft_someone_died(philo)
+			|| ft_enough_spaghetti(philo, times_eaten, round))
+			return (NULL);
+		if ((philo->num % 2 == 0 && round % 2 == 0)
+			|| (philo->num % 2 != 0 && round % 2 != 0))
 		{
-			//printf("philo %lu trying to lock someone_died because HE'S DYING\n", (unsigned long)philosopher->guest_id);
-			pthread_mutex_lock(philosopher->data->someone_died_mutex);
-			//printf("philo %lu locked someone_died\n", (unsigned long)philosopher->guest_id);
-			philosopher->data->someone_died = philosopher->order_of_arrival;
-			pthread_mutex_unlock(philosopher->data->someone_died_mutex);
-			//printf("philo %lu unlocked someone_died and unlocking time_of_defunction before returning...\n", (unsigned long)philosopher->guest_id);
-			//printf("philo %lu trying to lock time_of_defunction\n", (unsigned long)philosopher->guest_id);
-			pthread_mutex_lock(philosopher->data->time_of_defunction_mutex);
-			//printf("philo %lu locked time_of_defunction\n", (unsigned long)philosopher->guest_id);
-			philosopher->data->time_of_defunction = current_time.tv_usec;
-			return (pthread_mutex_unlock(philosopher->data->time_of_defunction_mutex), NULL);
-		}
-	//check if someone else died. If so, exits
-		//printf("philo %lu trying to lock someone_died\n", (unsigned long)philosopher->guest_id);
-		//write(1, "check 2\n", 8);
-		pthread_mutex_lock(philosopher->data->someone_died_mutex);
-		//printf("philo %lu locked someone_died\n", (unsigned long)philosopher->guest_id);
-		if (philosopher->data->someone_died != 0)
-		{
-			//printf("philo %lu found out someone_died. Unlocking someone_died and returning...\n", (unsigned long)philosopher->guest_id);
-			return (pthread_mutex_unlock(philosopher->data->someone_died_mutex), NULL);
-		}
-		pthread_mutex_unlock(philosopher->data->someone_died_mutex);
-		//printf("philo %lu unlocked someone_died\n", (unsigned long)philosopher->guest_id);
-	//check if the philo has eaten enough. If so, exits
-		//write(1, "check 3\n", 8);
-		if (philosopher->data->number_of_times_each_philosopher_must_eat != 0 && times_eaten == philosopher->data->number_of_times_each_philosopher_must_eat)
-		{
-			//printf("philo %lu trying to lock remaining_guests\n", (unsigned long)philosopher->guest_id);
-			pthread_mutex_lock(philosopher->data->remaining_guests_mutex);
-			//printf("philo %lu locked remaining_guests\n", (unsigned long)philosopher->guest_id);
-			philosopher->data->remaining_guests--;
-			//printf("philo %lu unlocking remaining_guests before returning...\n", (unsigned long)philosopher->guest_id);
-			return (pthread_mutex_unlock(philosopher->data->remaining_guests_mutex), NULL);
+			eat_nap_wakeup(philo);
+			times_eaten++;
 		}
 		else
-		{
-			if ((philosopher->order_of_arrival % 2 == 0 && round % 2 == 0)
-				|| (philosopher->order_of_arrival % 2 != 0 && round % 2 != 0))
-			{
-				wakeup_time = eat_nap_wakeup(philosopher);
-				times_eaten++;
-			}
-			else
-				printf("%d %d is thinking\n", current_time.tv_usec, philosopher->order_of_arrival);
-		}
+			ft_think(philo);
 		round++;
-	} 
+	}
 	return (NULL);
 }
 
-//creates the threads
-int	receive_guests(t_args *data)
+void	print_error(t_args *data)
 {
-	int i;
-//	pthread_t thread_id[data->number_of_philosophers];
-	t_guest philosopher[data->number_of_philosophers];
-	
-	i = 0;
-	while (i < data->number_of_philosophers)
-	{
-		philosopher[i].data = data;
-		philosopher[i].order_of_arrival = i + 1;
-		philosopher[i].guest_id = 0;
-		philosopher[i].times_eaten = 0;
-		if (pthread_create(&philosopher[i].guest_id, NULL, (void *)start_soiree, &philosopher[i]) != 0)
-			return (printf("error creating a thread. Exiting...\n"), 0);
-		//printf("thread %d with id %lu created\n", i, (long unsigned)philosopher[i].guest_id);
-		i++;
-	}
-	if (join_threads(philosopher) != 0)
-		return (0);
-	while (1)
-	{
-		pthread_mutex_lock(data->someone_died_mutex);
-		pthread_mutex_lock(data->remaining_guests_mutex);
-		write(1, "MAIN\n", 5);
-		if (data->someone_died != 0 || data->remaining_guests == 0)
-		{
-			if (data->someone_died != 0)
-			{
-				pthread_mutex_lock(data->time_of_defunction_mutex);
-				printf("%d %d died\n", data->time_of_defunction, data->someone_died);
-				pthread_mutex_unlock(data->time_of_defunction_mutex);
-			}
-			pthread_mutex_unlock(data->someone_died_mutex);
-			return (pthread_mutex_unlock(data->remaining_guests_mutex), 1);
-		}
-		pthread_mutex_unlock(data->someone_died_mutex);
-		pthread_mutex_unlock(data->remaining_guests_mutex);
-	}
-	//return (0);
+	pthread_mutex_lock(data->print_mutex);
+	printf("error creating thread. Exiting...\n");
+	pthread_mutex_unlock(data->print_mutex);
 }
 
-//arg checks, initialization and freeing
+t_guest	*init_philos(t_args *data)
+{
+	int		i;
+	t_guest	*philo;
+
+	i = 0;
+	philo = (t_guest *)malloc(sizeof(t_guest) * data->num_philos);
+	if (philo == NULL)
+		return (NULL);
+	while (i < data->num_philos)
+	{
+		philo[i].data = data;
+		philo[i].num = i;
+		philo[i].id = 0;
+		philo[i].times_eaten = 0;
+		philo[i].start = get_time(0);
+		philo[i].wakeup_time = philo[i].start;
+		if (pthread_create(&philo[i].id, NULL, (void *)soiree, &philo[i]) != 0)
+		{
+			print_error(data);
+			return (free(philo), NULL);
+		}
+		i++;
+	}
+	return (philo);
+}
+
+//inits & joins threads. Prints defunction time
+void	receive_guests(t_args *data)
+{
+	int				i;
+	t_guest			*philo;
+
+	i = 0;
+	philo = init_philos(data);
+	if (join_threads(philo) != 0)
+		return ;
+	if (data->time_of_death != 0)
+		printf("%lu %d died\n", data->time_of_death, data->someone_died + 1);
+	return ;
+}
+
 int	main(int argc, char **argv)
 {
+	int		i;
 	t_args	*data;
 
+	i = 1;
 	data = NULL;
 	if (argc < 5 || argc > 6)
-		return(printf("invalid number of arguments!\n"), 0);
-	//other arg checks like times_must_eat > 0 etc?
+		return (printf("invalid number of arguments!\n"), 0);
+	if (ft_atoi(argv[i]) == 0)
+		return (printf("num of philosophers must be > 0!\n"), 0);
+	while (i < argc)
+	{
+		if (is_valid(argv[i]) == 0)
+			return (printf("argument of invalid type!\n"), 0);
+		i++;
+	}
 	data = lay_the_table(argv);
 	if (data == NULL)
-		return(printf("initialization error!\n"), 0);
+		return (printf("initialization error!\n"), 0);
 	if (argc == 6)
-		data->number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
-	if (receive_guests(data))
-		printf("...the spaghetti party is comming to an end. Thanks everybody for comming...\n");
-	return (destroy_and_free(data, data->number_of_philosophers - 1, 1), 0);
+		data->times_must_eat = ft_atoi(argv[5]);
+	receive_guests(data);
+	return (destroy_and_free(data, data->num_philos - 1, 1), 0);
 }
