@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 17:39:16 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/17 18:53:01 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ t_guest	*init_philos(t_args *data)
 		philo[i].id = 0;
 		philo[i].times_eaten = 0;
 		philo[i].start = get_time(0);
-		philo[i].last_meal = philo[i].start;
+		philo[i].wakeup_time = philo[i].start;
 		if (pthread_create(&philo[i].id, NULL, (void *)soiree, &philo[i]) != 0)
 		{
 			print_error(data);

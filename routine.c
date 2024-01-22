@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 17:01:03 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 17:39:07 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/17 17:59:10 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ void	eat_nap_wakeup(t_guest *philo)
 	pthread_mutex_lock(philo->data->print_mutex);
 	printf("%lu %d has taken a fork\n", get_time(philo->start), philo->num + 1);
 	printf("%lu %d is eating\n", get_time(philo->start), philo->num + 1);
-	philo->last_meal = get_time(0);
 	pthread_mutex_unlock(philo->data->print_mutex);
 	usleep(philo->data->time_to_eat * 1000);
 	pthread_mutex_unlock(philo->data->forks[philo->num]);
@@ -37,6 +36,7 @@ void	eat_nap_wakeup(t_guest *philo)
 	printf("%lu %d is sleeping\n", get_time(philo->start), philo->num + 1);
 	pthread_mutex_unlock(philo->data->print_mutex);
 	usleep(philo->data->time_to_sleep * 1000);
+	philo->wakeup_time = get_time(0);
 }
 
 void	ft_think(t_guest *philo)
