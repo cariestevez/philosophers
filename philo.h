@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:45 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 17:39:09 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/17 18:24:55 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ typedef struct s_guest
 	int				num;
 	int				times_eaten;
 	uint64_t		start;
-	uint64_t		last_meal;
+	uint64_t		wakeup_time;
 	pthread_t		id;
 	t_args			*data;
 }	t_guest;

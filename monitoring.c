@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 16:58:52 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 17:39:11 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/17 17:59:40 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 int	ft_i_died(t_guest *philo)
 {
-	if ((get_time(0) - philo->last_meal) > philo->data->time_to_die)
+	if ((get_time(0) - philo->wakeup_time) > philo->data->time_to_die)
 	{
 		pthread_mutex_lock(philo->data->someonedied_mutex);
 		philo->data->someone_died = philo->num;
