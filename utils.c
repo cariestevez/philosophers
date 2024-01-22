@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:17 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/17 18:24:30 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/22 18:07:11 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ int	join_threads(t_guest *philosopher)
 
 	i = 0;
 	join_return = 0;
-	while (i < philosopher->data->num_philos)
+	while (i <= philosopher->data->num_philos)
 	{
 		join_return = pthread_join(philosopher[i].id, NULL);
 		if (join_return != 0)

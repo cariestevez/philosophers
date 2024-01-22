@@ -6,7 +6,7 @@
 /*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:45 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/17 18:24:55 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/22 19:03:42 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/time.h>
+
+typedef struct s_guest t_guest;
 
 //main data structure, shared by all threads
 typedef struct s_args
@@ -33,6 +35,7 @@ typedef struct s_args
 	pthread_mutex_t	*someonedied_mutex;
 	pthread_mutex_t	*timeofdeath_mutex;
 	pthread_mutex_t	*remaining_mutex;
+	t_guest			*philos;
 }	t_args;
 
 //specific for each thread(=philosopher)
@@ -41,7 +44,7 @@ typedef struct s_guest
 	int				num;
 	int				times_eaten;
 	uint64_t		start;
-	uint64_t		wakeup_time;
+	uint64_t		last_meal;
 	pthread_t		id;
 	t_args			*data;
 }	t_guest;
@@ -58,7 +61,7 @@ t_args		*last_preps_2(t_args *data, char **argv);
 t_args		*last_preps_3(t_args *data);
 
 //routine.c
-void		eat_nap_wakeup(t_guest *philo);
+int			eat_nap_wakeup(t_guest *philo)
 void		ft_think(t_guest *philo);
 void		ft_one_philo(t_guest *philo);
 
