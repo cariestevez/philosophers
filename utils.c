@@ -3,14 +3,31 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:17 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 18:07:11 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/24 23:21:44 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
+void	print_error(t_args *data)
+{
+	pthread_mutex_lock(&data->print_mutex);
+	printf("error creating thread. Exiting...\n");
+	pthread_mutex_unlock(&data->print_mutex);
+}
+
+int	ft_usleep(uint64_t milliseconds)
+{
+	size_t	start;
+
+	start = get_time(0);
+	while ((get_time(0) - start) < milliseconds)
+		usleep(500);
+	return (0);
+}
 
 uint64_t	get_time(uint64_t start)
 {

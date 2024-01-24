@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:45 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/22 19:03:42 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/24 22:58:19 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,18 +23,15 @@ typedef struct s_guest t_guest;
 typedef struct s_args
 {
 	int				num_philos;
-	int				someone_died;
-	int				remaining;
-	uint64_t		time_of_death;
+	int				end_dinner;
+	int				times_must_eat;
 	uint64_t		time_to_die;
 	uint64_t		time_to_eat;
 	uint64_t		time_to_sleep;
-	int				times_must_eat;
-	pthread_mutex_t	*print_mutex;
-	pthread_mutex_t	**forks;
-	pthread_mutex_t	*someonedied_mutex;
-	pthread_mutex_t	*timeofdeath_mutex;
-	pthread_mutex_t	*remaining_mutex;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	print_mutex;
+	pthread_mutex_t	enddinner_mutex;
+	pthread_mutex_t	lastmeal_mutex;
 	t_guest			*philos;
 }	t_args;
 
@@ -42,7 +39,8 @@ typedef struct s_args
 typedef struct s_guest
 {
 	int				num;
-	int				times_eaten;
+	int				eating;
+	int				meals;
 	uint64_t		start;
 	uint64_t		last_meal;
 	pthread_t		id;
@@ -50,27 +48,32 @@ typedef struct s_guest
 }	t_guest;
 
 //main.c
-void		*soiree(t_guest *philosopher);
-void		receive_guests(t_args *data);
+int			hungry_and_alive(t_guest *philo);
+void		*dinner(t_guest *philosopher);
+t_guest		*start_soiree(t_args *data);
+t_guest		*receive_guests(t_args *data);
 
 //init_and_free.c
-void		*destroy_and_free(t_args *data, int i, int flag);
+void		*destroy_and_free(t_guest *philo, t_args *data, int i, int flag);
 t_args		*lay_the_table(char **argv);
 t_args		*last_preparations(t_args *data, char **argv);
 t_args		*last_preps_2(t_args *data, char **argv);
-t_args		*last_preps_3(t_args *data);
+t_args		*last_preps_3(t_args *data, char **argv);
 
 //routine.c
-int			eat_nap_wakeup(t_guest *philo)
+void		ft_eat(t_guest *philo);
+void		nap_wakeup(t_guest *philo);
 void		ft_think(t_guest *philo);
 void		ft_one_philo(t_guest *philo);
 
 //monitoring.c
-int			ft_i_died(t_guest *philo);
+void		*waiter(t_guest *philo);
 int			ft_someone_died(t_guest *philo);
-int			ft_enough_spaghetti(t_guest *philo, int times_eaten, int round);
+int			ft_enough_spaghetti(t_guest *philo);
 
 //utils.c
+void		print_error(t_args *data);
+int			ft_usleep(uint64_t milliseconds);
 uint64_t	get_time(uint64_t start);
 int			join_threads(t_guest *philosopher);
 int			ft_atoi(const char *nptr);
