@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   init_and_free.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:41:25 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/24 23:02:34 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/25 21:31:22 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
 //destroys init mutexes(forks), frees the forks array and the args struct
-void	*destroy_and_free(t_guest *philo, t_args *data, int i, int flag)
+void	destroy_and_free(t_args *data, int i, int flag)
 {
 	printf("...FLAG = %d\n", flag);
 	while (i >= 0)
@@ -34,13 +34,14 @@ void	*destroy_and_free(t_guest *philo, t_args *data, int i, int flag)
 		pthread_mutex_destroy(&data->print_mutex);
 		printf("...print_mutex destroyed\n");
 	}
+	free(data->philos);
+	data->philos = NULL;
 	free(data);
 	data = NULL;
 	printf("...data struct freed\n");
-	free(philo);
-	philo = NULL;
+	// free(philo);
+	// philo = NULL;
 	printf("...philo struct freed\n");
-	return (NULL);
 }
 
 //initializes the main data struct and the mutex objects(forks)
@@ -50,24 +51,24 @@ t_args	*lay_the_table(char **argv)
 	t_args	*data;
 
 	i = 0;
-	data = (t_args *)malloc(sizeof(t_args));
+	data = (t_args *)ft_calloc(sizeof(t_args), 1);
 	printf("...data struct allocated\n");
 	if (data == NULL)
 		return (NULL);
 	data->num_philos = ft_atoi(argv[1]);
-	data->forks = malloc(sizeof(pthread_mutex_t) * data->num_philos);
+	data->forks = ft_calloc(sizeof(pthread_mutex_t), data->num_philos);
 	printf("...fork array allocated for %d forks\n", data->num_philos);
 	if (data->forks == NULL)
 		return (free(data), NULL);
 	while (i < data->num_philos)
 	{
 		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
-			return (destroy_and_free(NULL, data, i, 0));
+			return (destroy_and_free(data, i, 0), NULL);
 		printf("...fork %d mutex initialized\n", i);
 		i++;
 	}
 	if (last_preparations(data, argv) == NULL)
-		return (destroy_and_free(NULL, data, i, 0));
+		return (destroy_and_free(data, i, 0), NULL);
 	return (data);
 }
 

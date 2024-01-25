@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "${workspaceFolder}/main.c",
+                "${workspaceFolder}/init_and_free.c",
+                "${workspaceFolder}/monitoring.c",
+                "${workspaceFolder}/routine.c",
+                "${workspaceFolder}/utils.c",
+                "-o",
+                "${workspaceFolder}/philo"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
