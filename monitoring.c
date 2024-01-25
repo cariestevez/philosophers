@@ -3,26 +3,32 @@
 /*                                                        :::      ::::::::   */
 /*   monitoring.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 16:58:52 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/25 00:36:08 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/25 21:53:38 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void	*waiter(t_guest *philo)
+void	*waiter(void *param)
 {
+	t_guest	*philo;
+
+	philo = (t_guest *) param;
+//	ft_usleep(100);
+	//printf("Waiter ID: %lu\n", philo->id);
 	if (philo->data->num_philos == 1)
 		return (NULL);
-	ft_usleep(10);
+	ft_usleep(100);
 	//usleep(100);//to wait for the other threads to be initialized
 	while (1)
 	{
 		if (ft_someone_died(philo) || ft_enough_spaghetti(philo))
 			break;
 	}
+	write(1, "waiter finishing\n", 18);
 	return (NULL);
 }
 
@@ -37,13 +43,15 @@ int	ft_someone_died(t_guest *philo)
 		if ((get_time(0) - philo->data->philos[i].last_meal) > philo->data->time_to_die
 			&& philo[i].eating == 0)
 		{
+			pthread_mutex_lock(&philo->data->print_mutex);
+			printf("%lu %d died\n", get_time(philo->start), i);
+			pthread_mutex_unlock(&philo->data->print_mutex);
+			
+			
 			pthread_mutex_lock(&philo->data->enddinner_mutex);
 			philo->data->end_dinner = i;
 			pthread_mutex_unlock(&philo->data->enddinner_mutex);
 			
-			pthread_mutex_lock(&philo->data->print_mutex);
-			printf("%llu %d died\n", get_time(philo->start), i);
-			pthread_mutex_unlock(&philo->data->print_mutex);
 			
 			pthread_mutex_unlock(&philo->data->lastmeal_mutex);
 			return (1);

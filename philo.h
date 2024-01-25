@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:45 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/24 22:58:19 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/25 21:29:07 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,12 +49,12 @@ typedef struct s_guest
 
 //main.c
 int			hungry_and_alive(t_guest *philo);
-void		*dinner(t_guest *philosopher);
-t_guest		*start_soiree(t_args *data);
-t_guest		*receive_guests(t_args *data);
+void		*dinner(void *param);
+int			start_soiree(t_args *data);
+void		receive_guests(t_args *data);
 
 //init_and_free.c
-void		*destroy_and_free(t_guest *philo, t_args *data, int i, int flag);
+void		destroy_and_free(t_args *data, int i, int flag);
 t_args		*lay_the_table(char **argv);
 t_args		*last_preparations(t_args *data, char **argv);
 t_args		*last_preps_2(t_args *data, char **argv);
@@ -67,7 +67,7 @@ void		ft_think(t_guest *philo);
 void		ft_one_philo(t_guest *philo);
 
 //monitoring.c
-void		*waiter(t_guest *philo);
+void		*waiter(void *param);
 int			ft_someone_died(t_guest *philo);
 int			ft_enough_spaghetti(t_guest *philo);
 
@@ -75,6 +75,8 @@ int			ft_enough_spaghetti(t_guest *philo);
 void		print_error(t_args *data);
 int			ft_usleep(uint64_t milliseconds);
 uint64_t	get_time(uint64_t start);
-int			join_threads(t_guest *philosopher);
+int			join_threads(t_args *data);
 int			ft_atoi(const char *nptr);
 int			is_valid(const char *nptr);
+void	*ft_calloc(size_t nmemb, size_t size);
+void	ft_bzero(void *s, size_t n);
