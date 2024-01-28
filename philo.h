@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:39:45 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/25 21:29:07 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/28 23:23:05 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,22 +17,22 @@
 #include <pthread.h>
 #include <sys/time.h>
 
-typedef struct s_guest t_guest;
+typedef struct s_guest	t_guest;
 
 //main data structure, shared by all threads
 typedef struct s_args
 {
 	int				num_philos;
 	int				end_dinner;
-	int				times_must_eat;
-	uint64_t		time_to_die;
-	uint64_t		time_to_eat;
-	uint64_t		time_to_sleep;
+	int				must_eat;
+	uint64_t		to_die;
+	uint64_t		to_eat;
+	uint64_t		to_sleep;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	print_mutex;
 	pthread_mutex_t	enddinner_mutex;
 	pthread_mutex_t	lastmeal_mutex;
-	t_guest			*philos;
+	t_guest			*ph;
 }	t_args;
 
 //specific for each thread(=philosopher)
@@ -78,5 +78,5 @@ uint64_t	get_time(uint64_t start);
 int			join_threads(t_args *data);
 int			ft_atoi(const char *nptr);
 int			is_valid(const char *nptr);
-void	*ft_calloc(size_t nmemb, size_t size);
-void	ft_bzero(void *s, size_t n);
+void		*ft_calloc(size_t nmemb, size_t size);
+void		ft_bzero(void *s, size_t n);

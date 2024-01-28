@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   init_and_free.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 12:41:25 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/25 21:31:22 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/01/28 23:37:31 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 //destroys init mutexes(forks), frees the forks array and the args struct
 void	destroy_and_free(t_args *data, int i, int flag)
 {
-	printf("...FLAG = %d\n", flag);
 	while (i >= 0)
 	{
 		pthread_mutex_destroy(&data->forks[i]);
@@ -34,13 +33,11 @@ void	destroy_and_free(t_args *data, int i, int flag)
 		pthread_mutex_destroy(&data->print_mutex);
 		printf("...print_mutex destroyed\n");
 	}
-	free(data->philos);
-	data->philos = NULL;
+	free(data->ph);
+	data->ph = NULL;
 	free(data);
 	data = NULL;
 	printf("...data struct freed\n");
-	// free(philo);
-	// philo = NULL;
 	printf("...philo struct freed\n");
 }
 
@@ -99,10 +96,10 @@ t_args	*last_preparations(t_args *data, char **argv)
 
 t_args	*last_preps_2(t_args *data, char **argv)
 {
-	data->time_to_die = (uint64_t)ft_atoi(argv[2]);
-	data->time_to_eat = (uint64_t)ft_atoi(argv[3]);
-	data->time_to_sleep = (uint64_t)ft_atoi(argv[4]);
-	data->times_must_eat = 0;
-	data->philos = NULL;
+	data->to_die = (uint64_t)ft_atoi(argv[2]);
+	data->to_eat = (uint64_t)ft_atoi(argv[3]);
+	data->to_sleep = (uint64_t)ft_atoi(argv[4]);
+	data->must_eat = 0;
+	data->ph = NULL;
 	return (data);
 }
