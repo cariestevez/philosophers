@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/09 14:33:42 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/28 23:58:26 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/02/05 16:16:17 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,50 +42,39 @@ void	*dinner(void *param)
 	return (NULL);
 }
 
-int	start_soiree(t_args *data)
+int	receive_guests(t_args *data)
 {
 	int		i;
 
 	i = 0;
-	data->ph = ft_calloc(sizeof(t_guest), data->num_philos + 1);
-	if (data->ph == NULL)
+	data->philo = ft_calloc(sizeof(t_guest), data->num_philos + 1);
+	if (data->philo == NULL)
 		return (0);
-	printf("...philo struct allocated\n");
 	while (i <= data->num_philos)
 	{
-		data->ph[i].data = data;
-		data->ph[i].num = i;
-		data->ph[i].meals = 0;
-		data->ph[i].eating = 0;
-		data->ph[i].id = 0;
-		data->ph[i].start = get_time(0);
-		data->ph[i].last_meal = data->ph[i].start;
+		data->philo[i].data = data;
+		data->philo[i].num = i;
+		data->philo[i].meals = 0;
+		data->philo[i].eating = 0;
+		data->philo[i].id = 0;
+		data->philo[i].start = get_time(0);
+		data->philo[i].last_meal = data->philo[i].start;
 		i++;
 	}
-	//--->create a create_thread func (spaghetti_party)
-	i = 0;
-	while (i <= data->num_philos)
-	{
-		if (i == 0)
-			pthread_create(&data->ph[i].id, NULL, waiter, (void *)&data->ph[i]);
-		else
-			pthread_create(&data->ph[i].id, NULL, dinner, (void *)&data->ph[i]);
-		// {
-		// 	print_error(data);
-		// 	return (free(philo), NULL);
-		// }
-		i++;
-	}//<---
 	return (1);
 }
 
 //inits & joins threads. Prints defunction time
-void	receive_guests(t_args *data)
+void	start_soiree(t_args *data)
 {
-	if (!start_soiree(data))
+	if (!receive_guests(data))
 		return ;
-	//call to create threads func?
-	if (join_threads(data) != 0)
+	if (!guests_to_table(data))
+	{
+		destroy_and_free(data, data->num_philos - 1, 1);
+		return ;
+	}
+	if (wait_to_finish(data) != 0)
 	{
 		destroy_and_free(data, data->num_philos - 1, 1);
 		return ;
@@ -103,7 +92,7 @@ int	main(int argc, char **argv)
 	if (argc < 5 || argc > 6)
 		return (printf("invalid number of arguments!\n"), 0);
 	if (ft_atoi(argv[i]) == 0)
-		return (printf("num of philosophers must be > 0!\n"), 0);
+		return (printf("num of philoophers must be > 0!\n"), 0);
 	while (i < argc)
 	{
 		if (is_valid(argv[i]) == 0)
@@ -114,7 +103,7 @@ int	main(int argc, char **argv)
 	if (data == NULL)
 		return (printf("initialization error!\n"), 1);
 	if (argc == 6)
-		data->must_eat = ft_atoi(argv[5]);
-	receive_guests(data);
+		data->times_must_eat = ft_atoi(argv[5]);
+	start_soiree(data);
 	return (destroy_and_free(data, data->num_philos - 1, 1), 0);
 }
