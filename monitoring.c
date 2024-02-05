@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   monitoring.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cestevez <cestevez@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: cestevez <cestevez@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/17 16:58:52 by cestevez          #+#    #+#             */
-/*   Updated: 2024/01/28 23:39:41 by cestevez         ###   ########.fr       */
+/*   Updated: 2024/02/05 16:23:48 by cestevez         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,11 @@ void	*waiter(void *param)
 	philo = (t_guest *) param;
 	if (philo->data->num_philos == 1)
 		return (NULL);
-	ft_usleep(100);
 	while (1)
 	{
 		if (ft_someone_died(philo) || ft_enough_spaghetti(philo))
 			break ;
 	}
-	write(1, "waiter finishing\n", 18);
 	return (NULL);
 }
 
@@ -37,11 +35,11 @@ int	ft_someone_died(t_guest *philo)
 	while (i <= philo->data->num_philos)
 	{
 		pthread_mutex_lock(&philo->data->lastmeal_mutex);
-		if ((get_time(0) - philo->data->ph[i].last_meal) > philo->data->to_die
-			&& philo[i].eating == 0)
+		if ((get_time(0) - philo->data->philo[i].last_meal)
+			> philo->data->time_to_die && philo[i].eating == 0)
 		{
 			pthread_mutex_lock(&philo->data->print_mutex);
-			printf("%llu %d died\n", get_time(philo->start), i);
+			printf("%lu %d died\n", get_time(philo->start), i);
 			pthread_mutex_unlock(&philo->data->print_mutex);
 			pthread_mutex_lock(&philo->data->enddinner_mutex);
 			philo->data->end_dinner = i;
@@ -62,12 +60,12 @@ int	ft_enough_spaghetti(t_guest *philo)
 
 	i = 1;
 	enough_spaghetti = 0;
-	if (philo->data->must_eat == 0)
+	if (philo->data->times_must_eat == 0)
 		return (0);
 	pthread_mutex_lock(&philo->data->lastmeal_mutex);
 	while (i <= philo->data->num_philos)
 	{
-		if (philo[i].meals >= philo->data->must_eat)
+		if (philo[i].meals >= philo->data->times_must_eat)
 			enough_spaghetti++;
 		i++;
 	}
